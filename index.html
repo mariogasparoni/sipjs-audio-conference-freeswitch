@@ -1,0 +1,130 @@
+<html>
+
+  <meta charset="UTF-8">
+
+  <script type="text/javascript" src="https://github.com/onsip/SIP.js/releases/download/0.17.1/sip-0.17.1.min.js"> </script>
+  <body>
+    <audio id="remoteAudio" autoplay/>
+
+  </body>
+
+  <script>
+
+    const data = {};
+    const SIP_NUMBER = '70123';
+
+    function cleanupMedia() {
+      if (data.mediaElement) {
+        data.mediaElement.srcObject = null;
+        data.remoteStream = null;
+        data.mediaElement.pause();
+        data.mediaElement = null;
+      }
+    }
+
+    function setupRemoteMedia(session) {
+      data.session = session;
+
+      if (!data.mediaElement) {
+        data.mediaElement = document.getElementById('remoteAudio');
+      }
+
+      if (!data.remoteStream) {
+        data.remoteStream = new MediaStream();
+      }
+
+      session.sessionDescriptionHandler.peerConnection.getReceivers().forEach((receiver) => {
+        if (receiver.track) {
+          data.remoteStream.addTrack(receiver.track);
+        }
+      });
+
+      data.mediaElement.srcObject = data.remoteStream;
+      data.mediaElement.play();
+    }
+
+    function dial () {
+      var remoteAudio = document.getElementById('remoteAudio');
+
+      const userAgentOptions = {
+          transportOptions: {
+            server: 'wss://' + window.location.host + '/ws',
+          },
+          logLevel: 'warn',
+          displayName: 'User' + Math.floor( Math.random() * 1000000 ),
+          register: false,
+          userAgentString: 'Audio Tester'
+      };
+
+
+      const userAgent = new SIP.UserAgent(userAgentOptions);
+      userAgent.start().then(() => {
+
+        const SIP_URI = 'sip:' + SIP_NUMBER + '@' + window.location.host;
+
+        const target = SIP.UserAgent.makeURI(SIP_URI);
+
+        const inviterOptions = {
+          sessionDescriptionHandlerOptions : {
+            constraints: {
+              audio: true,
+              video: false
+            }
+          }
+        };
+
+        const inviter = new SIP.Inviter(userAgent, target, inviterOptions);
+
+        inviter.stateChange.addListener((state) => {
+          console.log(`Session state changed to ${state}`);
+          switch (state) {
+            case SIP.SessionState.Initial:
+              break;
+            case SIP.SessionState.Establishing:
+              break;
+            case SIP.SessionState.Established:
+              setupRemoteMedia(inviter);
+              break;
+            case SIP.SessionState.Terminating:
+              // fall through
+            case SIP.SessionState.Terminated:
+              cleanupMedia();
+              break;
+            default:
+              throw new Error("Unknown session state.");
+          }
+        });
+
+        inviter.invite();
+      });
+    }
+
+    function hangup() {
+      const session = data.session;
+      switch(session.state) {
+        case SIP.SessionState.Initial:
+        case SIP.SessionState.Establishing:
+          if (session instanceof SIP.Inviter) {
+            // An unestablished outgoing session
+            session.cancel();
+          } else {
+            // An unestablished incoming session
+            session.reject();
+          }
+          break;
+        case SIP.SessionState.Established:
+          // An established session
+          session.bye();
+          break;
+        case SIP.SessionState.Terminating:
+        case SIP.SessionState.Terminated:
+          // Cannot terminate a session that is already terminated
+          break;
+      }
+    }
+
+    window.onload = dial;
+    window.onbeforeunload = hangup;
+  </script>
+
+</html>
