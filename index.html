@@ -4,9 +4,49 @@
 
   <script type="text/javascript" src="https://github.com/onsip/SIP.js/releases/download/0.17.1/sip-0.17.1.min.js"> </script>
   <body>
+
+    <div class="container">
+      <button type="button" id="mainButton" onclick="handleMainButton()" class="button buttonblue"> Enable Audio </button>
+    </div>
     <audio id="remoteAudio" autoplay/>
 
   </body>
+
+
+  <style>
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .button {
+      background-color: #4CAF50; /* Green */
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 72px;
+      margin: 4px 2px;
+      cursor: pointer;
+    }
+
+    .buttonblue {background-color: #008CBA;}
+    .buttonred {
+      background-color: #f44336;
+      animation-name: animtest;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+
+    @keyframes animtest {
+      from {background-color: #f44336;}
+      to {background-color: #A44336;}
+    }
+
+  </style>
 
   <script>
 
@@ -19,6 +59,7 @@
         data.remoteStream = null;
         data.mediaElement.pause();
         data.mediaElement = null;
+        data.mainButtonEnabled = false;
       }
     }
 
@@ -101,6 +142,7 @@
 
     function hangup() {
       const session = data.session;
+      if (!session) return;
       switch(session.state) {
         case SIP.SessionState.Initial:
         case SIP.SessionState.Establishing:
@@ -123,7 +165,21 @@
       }
     }
 
-    window.onload = dial;
+    function handleMainButton() {
+      data.mainButtonEnabled =! data.mainButtonEnabled;
+
+      const button = document.getElementById('mainButton');
+      if (data.mainButtonEnabled) {
+        button.innerHTML = 'Disable Audio';
+        button.className = 'button buttonred';
+        dial();
+      } else {
+        button.innerHTML = 'Enable Audio';
+        button.className = 'button buttonblue';
+        hangup();
+      }
+    }
+
     window.onbeforeunload = hangup;
   </script>
 
