@@ -70,15 +70,7 @@
         data.mediaElement = document.getElementById('remoteAudio');
       }
 
-      if (!data.remoteStream) {
-        data.remoteStream = new MediaStream();
-      }
-
-      session.sessionDescriptionHandler.peerConnection.getReceivers().forEach((receiver) => {
-        if (receiver.track) {
-          data.remoteStream.addTrack(receiver.track);
-        }
-      });
+      data.remoteStream = session.sessionDescriptionHandler.localMediaStream;
 
       data.mediaElement.srcObject = data.remoteStream;
       data.mediaElement.play();
