@@ -74,7 +74,7 @@
         data.mediaElement = document.getElementById('remoteAudio');
       }
 
-      data.remoteStream = session.sessionDescriptionHandler.localMediaStream;
+      data.remoteStream = session.sessionDescriptionHandler.remoteMediaStream;
 
       data.mediaElement.srcObject = data.remoteStream;
       data.mediaElement.play();
