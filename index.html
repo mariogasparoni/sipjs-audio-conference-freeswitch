@@ -52,6 +52,10 @@
 
     const data = {};
     const SIP_NUMBER = '70123';
+    const iceServers = [
+      // stunServer,
+      // turnServer,
+    ];
 
     function cleanupMedia() {
       if (data.mediaElement) {
@@ -81,7 +85,12 @@
 
       const userAgentOptions = {
           transportOptions: {
-            server: 'wss://' + window.location.host + '/ws',
+            server: 'wss://' +  window.location.hostname + '/audio',
+          },
+          sessionDescriptionHandlerFactoryOptions: {
+            peerConnectionConfiguration: {
+              iceServers,
+            }
           },
           logLevel: 'warn',
           displayName: 'User' + Math.floor( Math.random() * 1000000 ),
